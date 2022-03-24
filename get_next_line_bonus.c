@@ -1,0 +1,138 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   get_next_line_bonus.c                              :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: fiselann <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2022/03/24 12:22:33 by fiselann          #+#    #+#             */
+/*   Updated: 2022/03/24 12:39:47 by fiselann         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "get_next_line_bonus.h"
+
+char	*strjoin(char *buffer, char *data)
+{
+	char	*strjoined;
+	int		len;
+	int		i;
+	int		j;
+
+	if (!buffer)
+		len = ft_strlen(data);
+	else
+		len = ft_strlen(buffer) + ft_strlen(data);
+	strjoined = malloc(sizeof(char) * len + 1);
+	if (!strjoined)
+		return (NULL);
+	i = 0;
+	j = 0;
+	while (buffer && buffer[i])
+	{
+		strjoined[i] = buffer[i];
+		i++;
+	}
+	while (data[j])
+		strjoined[i++] = data[j++];
+	strjoined[i] = '\0';
+	free(buffer);
+	return (strjoined);
+}
+
+char	*get_line(char *str)
+{
+	char	*line;
+	int		i;
+
+	if (str[0] == '\0')
+		return (NULL);
+	i = 0;
+	while (str[i] && str[i] != '\n')
+		i++;
+	line = malloc(sizeof(char) * i + 2);
+	if (!line)
+		return (NULL);
+	i = 0;
+	while (str[i] && str[i] != '\n')
+	{
+		line[i] = str[i];
+		i++;
+	}	
+	if (str[i] == '\n')
+	{
+		line[i] = str[i];
+		i++;
+	}
+	line[i] = '\0';
+	return (line);
+}
+
+char	*read_file(int fd, char *buffer)
+{
+	char	*data;
+	int		nbytes;
+
+	data = malloc(sizeof(char) * BUFFER_SIZE + 1);
+	if (!data)
+		return (NULL);
+	nbytes = 1;
+	while (nbytes != 0)
+	{
+		nbytes = read(fd, data, BUFFER_SIZE);
+		if (nbytes == -1)
+		{
+			free(data);
+			return (NULL);
+		}
+		data[nbytes] = '\0';
+		buffer = strjoin(buffer, data);
+		if (is_eol(data) != 0)
+			break ;
+	}
+	free(data);
+	return (buffer);
+}
+
+char	*update_buffer(char *str, char *substr)
+{
+	char	*updated;
+	int		len_str;
+	int		len_substr;
+	int		i;
+
+	if (str[0] == '\0')
+	{
+		free(str);
+		return (NULL);
+	}
+	len_substr = ft_strlen(substr);
+	len_str = ft_strlen(str);
+	updated = malloc(sizeof(char) * (len_str - len_substr) + 1);
+	if (!updated)
+	{
+		free(str);
+		return (NULL);
+	}
+	i = 0;
+	while (str[len_substr])
+		updated[i++] = str[len_substr++];
+	updated[i] = '\0';
+	free(str);
+	return (updated);
+}
+
+char	*get_next_line(int fd)
+{
+	static char	*buffer[OPEN_MAX];
+	char		*line;
+
+	if (fd < 0 || BUFFER_SIZE <= 0)
+		return (NULL);
+	buffer[fd] = read_file(fd, buffer[fd]);
+	if (!buffer[fd])
+		return (NULL);
+	line = get_line(buffer[fd]);
+	buffer[fd] = update_buffer(buffer[fd], line);
+	return (line);
+}
